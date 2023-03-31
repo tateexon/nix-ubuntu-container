@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# copied and edited from: https://github.com/cachix/install-nix-action/blob/master/install-nix.sh
+set -euo pipefail
+
+if nix_path="$(type -p nix)" ; then
+  echo "Aborting: Nix is already installed at ${nix_path}"
+  exit
+fi
+
+# Create a temporary workdir
+workdir=$(mktemp -d)
+trap 'rm -rf "$workdir"' EXIT
+
+# Configure Nix
+add_config() {
+  echo "$1" >> "$workdir/nix.conf"
+}
+# Set jobs to number of cores
+add_config "max-jobs = auto"
+# Allow binary caches for user
+add_config "trusted-users = root ${USER:-}"
+# Append extra nix configuration if provided
+if [[ -n "${INPUT_EXTRA_NIX_CONFIG:-}" ]]; then
+  add_config "$INPUT_EXTRA_NIX_CONFIG"
+else
+    INPUT_EXTRA_NIX_CONFIG=""
+fi
+if [[ ! $INPUT_EXTRA_NIX_CONFIG =~ "experimental-features" ]]; then
+  add_config "experimental-features = nix-command flakes"
+fi
+
+# Nix installer flags
+installer_options=(
+  --no-channel-add
+  --darwin-use-unencrypted-nix-store-volume
+  --nix-extra-conf-file "$workdir/nix.conf"
+)
+
+# "fix" the following error when running nix*
+# error: the group 'nixbld' specified in 'build-users-group' does not exist
+add_config "build-users-group ="
+sudo mkdir -p /etc/nix
+sudo chmod 0755 /etc/nix
+sudo cp "$workdir/nix.conf" /etc/nix/nix.conf
+
+# There is --retry-on-errors, but only newer curl versions support that
+curl_retries=5
+while ! curl -sS -o "$workdir/install" -v --fail -L "${INPUT_INSTALL_URL:-https://nixos.org/nix/install}"
+do
+  sleep 1
+  ((curl_retries--))
+  if [[ $curl_retries -le 0 ]]; then
+    echo "curl retries failed" >&2
+    exit 1
+  fi
+done
+
+sh "$workdir/install" "${installer_options[@]}"
