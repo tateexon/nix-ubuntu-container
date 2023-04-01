@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+filename=temp.txt
+repo=tateexon/nix-ubuntu
+temp_tag=temp
+ubuntu_version=${1}
+push=${2}
+
+# build the image
+docker build -t ${repo}:${temp_tag} -f ./Dockerfile --build-arg UBUNTU_VERSION=${ubuntu_version} .
+
+# get the nix version
+docker run -it --rm -v $(pwd):/repo --workdir /repo ${repo}:${temp_tag} /repo/getVersion "${filename}"
+nix_version=$(<"${filename}")
+
+# create the tag
+push_tag=
+if [[ "$ubuntu_version" = "latest" ]]; then
+    push_tag=${ubuntu_version}
+else
+    push_tag=${ubuntu_version}-nix${nix_version}
+fi
+docker tag ${repo}:${temp_tag} ${repo}:${push_tag}
+
+# Push if told to do so
+if [ -n "$push" ]; then
+    docker push ${repo}:${push_tag}
+fi
+
+# cleanup
+rm ${filename}
+docker image rm ${repo}:${temp_tag}

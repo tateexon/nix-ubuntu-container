@@ -1,5 +1,6 @@
-FROM public.ecr.aws/ubuntu/ubuntu:latest
-ARG NIX_VERSION=2.14.1
+ARG UBUNTU_VERSION=latest
+
+FROM public.ecr.aws/ubuntu/ubuntu:${UBUNTU_VERSION}
 ENV NIX_PATH=nixpkgs=channel:nixos-unstable
 COPY ./nixInstall ./nixInstall
 RUN apt-get update && apt-get install -y wget xz-utils gpg openssl bash sudo curl git \
