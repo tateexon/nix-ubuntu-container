@@ -12,5 +12,5 @@ make build-latest
 You can then run it locally to use nix in your local repository with
 
 ```bash
-make run
+docker run -it --rm -v $(pwd):/repo -e NIX_USER_CONF_FILES=/repo/nix.conf --workdir /repo tateexon/nix-ubuntu:latest /bin/bash
 ```
