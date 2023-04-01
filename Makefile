@@ -1,6 +1,6 @@
 .PHONY: build-latest
 build-latest:
-	@bash -c ./buildVersionTag latest $(push)
+	@./buildVersionTag latest $(push)
 
 # Build with specific ubuntu version and tag with <ubuntu-version>-nix<nix-version>
 # make build-versioned ubuntu=22.10 push=true
