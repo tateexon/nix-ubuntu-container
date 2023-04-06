@@ -5,7 +5,7 @@ filename=temp.txt
 repo=tateexon/nix-ubuntu
 temp_tag=temp
 ubuntu_version=${1}
-push=${2}
+push=${2:-false}
 
 # build the image
 docker build -t ${repo}:${temp_tag} -f ./Dockerfile --build-arg UBUNTU_VERSION=${ubuntu_version} .
@@ -24,7 +24,7 @@ fi
 docker tag ${repo}:${temp_tag} ${repo}:${push_tag}
 
 # Push if told to do so
-if [ -n "$push" ]; then
+if [ "$push" = "true" ]; then
     docker push ${repo}:${push_tag}
 fi
 

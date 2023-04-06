@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /repo/
+
+# If /repo/.envrc exists then run direnv allow and eval it
+if [ -f .envrc ]; then
+    echo "Setting up directory with direnv"
+    direnv allow
+    eval "$(direnv hook bash)"
+fi
